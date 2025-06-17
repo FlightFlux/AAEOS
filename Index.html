@@ -1,67 +1,100 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>✨ Local Summarizer (20 MB Model)</title>
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>🧠 AI Summarizer (Transformers.js)</title>
+  <script src="https://cdn.jsdelivr.net/npm/@xenova/transformers@2.6.0/dist/transformers.min.js"></script>
   <style>
-    body { margin:0; font-family:sans-serif; height:100vh;
-      background: linear-gradient(135deg,#1a2a6c,#b21f1f,#fdbb2d); color:#fff;
-      display:flex; align-items:center; justify-content:center; }
-    .card { backdrop-filter:blur(10px); background:rgba(255,255,255,0.1);
-      padding:2rem; border-radius:12px; width:90%; max-width:600px;
-      box-shadow:0 8px 20px rgba(0,0,0,0.3);}
-    h1 { text-align:center; margin-bottom:1rem; font-size:2rem;}
-    textarea { width:100%; height:150px; border:none; border-radius:8px;
-      padding:1rem; font-size:1rem; resize:none; }
-    button { display:block; margin:1rem auto; padding:0.75rem 2rem;
-      font-size:1.1rem; border:none; border-radius:8px; cursor:pointer;
-      background:linear-gradient(90deg,#ff8a00,#e52e71);
-      color:#fff; transition:transform .2s; }
-    button:hover { transform:scale(1.05); }
-    .output { margin-top:1rem; white-space:pre-wrap; min-height:80px;
-      border-radius:8px; padding:1rem; background:rgba(255,255,255,0.1);}
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .card {
+      background: rgba(255,255,255,0.05);
+      backdrop-filter: blur(10px);
+      padding: 2rem;
+      border-radius: 15px;
+      width: 90%;
+      max-width: 600px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+    }
+    h1 {
+      text-align: center;
+      font-size: 1.8rem;
+      margin-bottom: 1rem;
+    }
+    textarea {
+      width: 100%;
+      height: 160px;
+      padding: 1rem;
+      border-radius: 10px;
+      border: none;
+      resize: none;
+      font-size: 1rem;
+    }
+    button {
+      margin-top: 1rem;
+      padding: 0.8rem 1.5rem;
+      font-size: 1rem;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      background: linear-gradient(90deg, #ff512f, #dd2476);
+      color: white;
+      transition: background 0.3s ease;
+      width: 100%;
+    }
+    button:hover {
+      background: linear-gradient(90deg, #dd2476, #ff512f);
+    }
+    .output {
+      margin-top: 1.5rem;
+      padding: 1rem;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.1);
+      min-height: 60px;
+      white-space: pre-wrap;
+    }
   </style>
-  <script type="module">
-    import { WebLLM } from 'https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.7.2/dist/web-llm.min.js';
-
-    let llm;
-    async function init() {
-      document.getElementById('out').textContent = 'Loading model…';
-      const blobBase64 = `PASTE_BASE64_MODEL_HERE`;  // ← Replace with your base64
-      const buffer = Uint8Array.from(atob(blobBase64), c => c.charCodeAt(0)).buffer;
-      llm = await WebLLM.init({ device: 'webgpu', wasm: true, model: { bytes: buffer } });
-      document.getElementById('out').textContent = 'Model ready ✅';
-    }
-
-    async function summarize() {
-      const text = document.getElementById('inp').value.trim();
-      if (!text) return;
-      const out = document.getElementById('out');
-      out.textContent = '🔄 Generating summary...';
-      try {
-        const sum = await llm.predict('summarize: ' + text, {
-          max_output_tokens: 128,
-          temperature: 0.3,
-        });
-        out.textContent = sum;
-      } catch (e) {
-        out.textContent = '❌ ' + e.message;
-      }
-    }
-
-    window.addEventListener('load', () => {
-      document.getElementById('btn').onclick = summarize;
-      init().catch(e => document.getElementById('out').textContent = 'Init failed: ' + e);
-    });
-  </script>
 </head>
 <body>
   <div class="card">
-    <h1>🧠 Summarizer (Offline)</h1>
-    <textarea id="inp" placeholder="Paste your text here..."></textarea>
-    <button id="btn">Summarize</button>
-    <div id="out" class="output">Initializing…</div>
+    <h1>📄 Summarize Text</h1>
+    <textarea id="input" placeholder="Paste text to summarize..."></textarea>
+    <button id="summarize">Summarize</button>
+    <div class="output" id="output">Model loading...</div>
   </div>
+
+  <script type="module">
+    const output = document.getElementById("output");
+    const summarizeBtn = document.getElementById("summarize");
+    const inputField = document.getElementById("input");
+
+    output.textContent = "⏳ Loading model...";
+    const pipeline = await window.transformers.pipeline(
+      "summarization",
+      "Xenova/t5-small"
+    );
+    output.textContent = "✅ Model ready";
+
+    summarizeBtn.onclick = async () => {
+      const text = inputField.value.trim();
+      if (!text) return (output.textContent = "⚠️ Please enter some text.");
+      output.textContent = "🧠 Summarizing...";
+      try {
+        const result = await pipeline(text);
+        output.textContent = result[0].summary_text;
+      } catch (err) {
+        output.textContent = "❌ Error: " + err.message;
+      }
+    };
+  </script>
 </body>
 </html>
